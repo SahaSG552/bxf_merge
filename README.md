@@ -1,4 +1,4 @@
-# bxf_merge - batch import *.bxf2 files into BAZIS
+# bxf_merge - batch import *.bxf2 files into BAZIS CAD
 ## What is a BXF file?
 The BXF file (Blum Exchange Format) not only contains information about the fitting, but also manufacturing information for wooden parts, such as cutting dimensions and drilling positions. The BXF file is created by the Product Configurator and Cabinet Configurator, which you can then import into your CAD software for further planning.
 
