@@ -44,7 +44,9 @@ with contextlib.suppress(IndexError):
                 line = bxf.readline()
                 # collecting machinning operations of part
                 if "<machining " in line:
-                    machining.append(line.rstrip("\n"))
+                    # filter unnecessary machining
+                    if line.find('id="VERT_5.0x9.3"') == -1:
+                        machining.append(line.rstrip("\n"))
                 # collecting part name
                 if "<partLink " in line:
                     partlink.append(line.rstrip("\n"))
@@ -52,9 +54,7 @@ with contextlib.suppress(IndexError):
                 if "<extent>" in line:
                     x, y, z = map(
                         float,
-                        (
-                            (line.lstrip("<extent>")).rstrip("</extent>\n")
-                        ).split(" "),
+                        ((line.lstrip("<extent>")).rstrip("</extent>\n")).split(" "),
                     )
                     move_x.append(x + offset)  # offset
                     # accumulate offsets to get x coordinate of part
@@ -67,9 +67,14 @@ with contextlib.suppress(IndexError):
                     part.append(line.rstrip("\n"))
 
             # writing down zero_x coordinate to partlink
-            partlink.extend(["<transformations>",
-                             f'<transformation translation="{zero_x[i]} 0 0"/>',
-                             "</transformations>", "</partLink>",])
+            partlink.extend(
+                [
+                    "<transformations>",
+                    f'<transformation translation="{zero_x[i]} 0 0"/>',
+                    "</transformations>",
+                    "</partLink>",
+                ]
+            )
 
         machinings.extend(machining)
         machinings = list(set(machinings))
@@ -78,7 +83,7 @@ with contextlib.suppress(IndexError):
 
     # open template file, complete missing parts and save as new_bxf
     with open("Template.txt", "r", encoding="utf-8") as template, open(
-        new_bxf_path, "w"
+        new_bxf_path, "w", encoding="utf-8"
     ) as new_bxf:
         line = template.readline()
         while line:
