@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<bxf xsi:schemaLocation="http://www.blum.com/BXF2 http://www.blum.com/BXF2/bxf2.xsd" xmlns="http://www.blum.com/bxf2" xmlns:ns2="http://www.blum.com/bxf2/bxf2snp" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<head>
+<version>2.3</version>
+<date>23.12.2022 13:56:05</date>
+<author>PIDOR</author>
+<copyright></copyright>
+<unit meter="0.001" name="meter"/>
+<angularUnit>degree</angularUnit>
+<country>RU</country>
+<language>ru</language>
+<parameters>
+<parameter name="testmode">
+<value xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema">false</value>
+</parameter>
+<parameter name="converterVersion">
+<value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">1.3.0</value>
+</parameter>
+<parameter name="snippetPath">
+<value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">PAI_ProductMasterPool\Machinings\V2.4\</value>
+</parameter>
+</parameters>
+</head>
+<scene>
+<nodes>
+<node>
+<cabinetLinks>
+<cabinetLink referenceId="ORDERNAME">
+</cabinetLink>
+</cabinetLinks>
+</node>
+</nodes>
+</scene>
+<library>
+<machinings>
+MACHININGS
+</machinings>
+<cabinets>
+<cabinet id="ORDERNAME" uid="1">
+<partLinks>
+PARTLINKS
+</partLinks>
+</cabinet>
+</cabinets>
+<parts>
+PARTS
+</parts>
+</library>
+</bxf>
