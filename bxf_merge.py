@@ -43,6 +43,7 @@ with contextlib.suppress(IndexError):
             while "</part>" not in line:  # in this case no need to read the rest lines
                 line = bxf.readline()
                 # collecting machinning operations of part
+                # sourcery skip: merge-nested-ifs
                 if "<machining " in line:
                     # filter unnecessary machining
                     if line.find('id="VERT_5.0x9.3"') == -1:
