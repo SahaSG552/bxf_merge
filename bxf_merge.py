@@ -29,7 +29,7 @@ with contextlib.suppress(IndexError):
     parts = []
     offset = 150
 
-    x, y, z = 0, 0, 0  # detail dimensions
+    x, y, z = 0.0, 0.0, 0.0  # detail dimensions
     move_x = [0.0]  # move every detail + 150 mm next to previous along x axis
     zero_x = [0.0]  # calculate x coordinate of each detail after moving
     for i, bxf_path in enumerate(bxf_paths):
@@ -89,7 +89,7 @@ with contextlib.suppress(IndexError):
         line = template.readline()
         while line:
             line = template.readline()
-            if "MACHININGS" in line:
+            if "MACHININGS" in line and machinings:
                 line = "\n".join(machinings)
             if "PARTLINKS" in line:
                 line = "\n".join(partlinks)
