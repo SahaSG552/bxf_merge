@@ -1,0 +1,4 @@
+2025-09-03 18:02:00,766 - DEBUG - Starting script with args: ['e:/Работа/Programming/Python/bxf_merge/bxf_merge.py']
+2025-09-03 18:02:00,766 - DEBUG - Starting main function
+2025-09-03 18:02:00,767 - DEBUG - Loaded config: {'mode': 'standard_path', 'path': 'E:\\Работа\\РАБОЧИЕ ПРОЕКТЫ\\bazis_import\\ORD'}
+2025-09-03 18:02:00,767 - DEBUG - Using config mode: standard_path
