@@ -1,6 +1,7 @@
 import contextlib
 import tkinter as tk
 from tkinter.filedialog import askopenfilenames, askdirectory
+from tkinter import messagebox
 import os
 import sys
 from io import StringIO
@@ -18,17 +19,17 @@ TEMPLATE_CONTENT = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <angularUnit>degree</angularUnit>
 <country>RU</country>
 <language>ru</language>
-<parameters>
+<s>
 <parameter name="testmode">
 <value xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema">false</value>
-</parameter>
+</parameter
 <parameter name="converterVersion">
 <value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">1.3.0</value>
-</parameter>
+</parameter
 <parameter name="snippetPath">
 <value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">PAI_ProductMasterPool\\Machinings\\V2.4\\</value>
-</parameter>
-</parameters>
+</parameter
+</s>
 </head>
 <scene>
 <nodes>
@@ -146,44 +147,81 @@ def process_bxf_files(bxf_paths, order_name, order_path):
 def select_files(initial_dir):
     root = tk.Tk()
     root.withdraw()
-    return askopenfilenames(
-        parent=root,
+    files = askopenfilenames(
         initialdir=initial_dir,
         title="Choose bxf2 files",
         filetypes=[("BXF2", "*.bxf2")],
     )
+    root.destroy()
+    return files
 
 
 def select_directory():
     root = tk.Tk()
     root.withdraw()
-    return askdirectory(
-        parent=root,
+    directory = askdirectory(
         title="Select orders folder",
         initialdir=r"E:\Работа\РАБОЧИЕ ПРОЕКТЫ\bazis_import\ORD",
     )
+    root.destroy()
+    return directory
 
 
-def input_order_number(parent):
-    dialog = tk.Toplevel(parent)
+def input_order_number(parent, base_path):
+    dialog = tk.Tk() if parent is None else tk.Toplevel(parent)
     dialog.title("Enter Order Number")
-    dialog.geometry("300x100")
+    dialog.geometry("300x150")
     dialog.resizable(False, False)
 
     tk.Label(dialog, text="Enter order number (e.g., 1234):").pack(pady=10)
     entry = tk.Entry(dialog)
     entry.pack(pady=5)
+    entry.focus_set()
+
+    error_label = tk.Label(dialog, text="", fg="red")
+    error_label.pack(pady=5)
 
     result = []
 
     def on_submit():
-        result.append(entry.get())
+        order_number = entry.get()
+        if not order_number:
+            dialog.destroy()
+            return
+
+        order_path = os.path.join(base_path, order_number)
+        if not os.path.exists(order_path):
+            error_label.config(text="Папка не найдена. Попробуйте снова.")
+            return
+
+        bxf_paths = [
+            os.path.join(order_path, f)
+            for f in os.listdir(order_path)
+            if f.lower().endswith(".bxf2")
+        ]
+        if not bxf_paths:
+            error_label.config(text="Файлы .bxf2 не найдены. Попробуйте снова.")
+            return
+
+        result.append(order_number)
         dialog.destroy()
 
-    tk.Button(dialog, text="OK", command=on_submit).pack(pady=5)
-    dialog.transient(parent)
-    dialog.grab_set()
-    parent.wait_window(dialog)
+    def on_cancel():
+        dialog.destroy()
+
+    frame = tk.Frame(dialog)
+    frame.pack(pady=5)
+    tk.Button(frame, text="Cancel", command=on_cancel).pack(side="left", padx=10)
+    tk.Button(frame, text="OK", command=on_submit).pack(side="right", padx=10)
+    dialog.bind("<Return>", lambda event: on_submit())
+
+    if parent:
+        dialog.transient(parent)
+        dialog.grab_set()
+        parent.wait_window(dialog)
+    else:
+        dialog.mainloop()
+
     return result[0] if result else ""
 
 
@@ -201,7 +239,7 @@ def main():
                     process_bxf_files(bxf_paths, order_name, order_path)
                     save_config({"mode": "select_files", "path": order_path})
         elif config["mode"] == "standard_path":
-            order_number = input_order_number(tk.Tk())
+            order_number = input_order_number(None, config["path"])
             if order_number:
                 order_path = os.path.join(config["path"], order_number)
                 bxf_paths = [
@@ -209,8 +247,8 @@ def main():
                     for f in os.listdir(order_path)
                     if f.lower().endswith(".bxf2")
                 ]
-                if bxf_paths:
-                    process_bxf_files(bxf_paths, order_number, order_path)
+                process_bxf_files(bxf_paths, order_number, order_path)
+        sys.exit(0)
         return
 
     # Create GUI
@@ -238,6 +276,9 @@ def main():
 
     def save_settings():
         config = {"mode": mode_var.get(), "path": selected_path.get()}
+        if not os.path.exists(selected_path.get()):
+            messagebox.showerror("Ошибка", f"Папка {selected_path.get()} не найдена")
+            return
         save_config(config)
         root.destroy()
 
@@ -249,7 +290,7 @@ def main():
                     order_path = os.path.dirname(bxf_paths[0])
                     process_bxf_files(bxf_paths, order_name, order_path)
         elif mode_var.get() == "standard_path":
-            order_number = input_order_number(tk.Tk())
+            order_number = input_order_number(None, selected_path.get())
             if order_number:
                 order_path = os.path.join(selected_path.get(), order_number)
                 bxf_paths = [
@@ -257,12 +298,12 @@ def main():
                     for f in os.listdir(order_path)
                     if f.lower().endswith(".bxf2")
                 ]
-                if bxf_paths:
-                    process_bxf_files(bxf_paths, order_number, order_path)
+                process_bxf_files(bxf_paths, order_number, order_path)
 
     tk.Button(root, text="Сохранить настройки", command=save_settings).pack(pady=20)
 
     root.mainloop()
+    sys.exit(0)
 
 
 if __name__ == "__main__":
@@ -278,5 +319,16 @@ if __name__ == "__main__":
             ]
             if bxf_paths:
                 process_bxf_files(bxf_paths, order_name, order_path)
+            else:
+                root = tk.Tk()
+                root.withdraw()
+                messagebox.showerror("Ошибка", f"Файлы .bxf2 не найдены в {order_path}")
+                root.destroy()
+        else:
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Ошибка", f"Папка {order_path} не найдена")
+            root.destroy()
     else:
         main()
+    sys.exit(0)
