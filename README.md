@@ -13,3 +13,5 @@ In our manufacture we use both BXF and bazis a lot. Information about every work
 <div align="center">
 <img src="bxf_merge.gif" alt="BXF_merge"  width="100%"/>
 </div> 
+
+{pyinstaller --onefile --name bxf_merge.exe --icon="E:\Работа\Programming\Python\bxf_merge\ico\fuck.ico" --noconsole bxf_merge.py}
