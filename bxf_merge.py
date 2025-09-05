@@ -12,24 +12,24 @@ TEMPLATE_CONTENT = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <bxf xsi:schemaLocation="http://www.blum.com/BXF2 http://www.blum.com/BXF2/bxf2.xsd" xmlns="http://www.blum.com/bxf2" xmlns:ns2="http://www.blum.com/bxf2/bxf2snp" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <head>
 <version>2.3</version>
-<date>23.12.2022 13:56:05</date>
-<author>PIDOR</author>
+<date>04.09.2025 13:22:24</date>
+<author></author>
 <copyright></copyright>
 <unit meter="0.001" name="meter"/>
 <angularUnit>degree</angularUnit>
 <country>RU</country>
 <language>ru</language>
-<s>
+<parameters>
 <parameter name="testmode">
 <value xsi:type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema">false</value>
-</parameter
+</parameter>
 <parameter name="converterVersion">
 <value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">1.3.0</value>
-</parameter
+</parameter>
 <parameter name="snippetPath">
-<value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">PAI_ProductMasterPool\\Machinings\\V2.4\\</value>
-</parameter
-</s>
+<value xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">PAI_ProductMasterPool\Machinings\V2.4\</value>
+</parameter>
+</parameters>
 </head>
 <scene>
 <nodes>
@@ -84,34 +84,46 @@ def process_bxf_files(bxf_paths, order_name, order_path):
     partlinks = []
     parts = []
     offset = 150
-    move_x = [0.0]
-    zero_x = [0.0]
+
+    x, y, z = 0.0, 0.0, 0.0  # detail dimensions
+    move_x = [0.0]  # move every detail + 150 mm next to previous along x axis
+    zero_x = [0.0]  # calculate x coordinate of each detail after moving
     for i, bxf_path in enumerate(bxf_paths):
         machining = []
         partlink = []
         part = []
         with open(bxf_path, "r", encoding="utf-8") as bxf:
-            part_flag = 0
-            for line in bxf:
-                if "</part>" in line:
-                    part.append(line.rstrip("\n"))
-                    break
-                if "<machining " in line and 'id="VERT_5.0x9.3"' not in line:
-                    machining.append(line.rstrip("\n"))
+            counter = 0  # counting down lines in file
+            part_flag = 0  # flag when to start record part information
+            line = bxf.readline()
+            while "</part>" not in line:  # in this case no need to read the rest lines
+                line = bxf.readline()
+                # collecting machinning operations of part
+                # sourcery skip: merge-nested-ifs
+                if "<machining " in line:
+                    # filter unnecessary machining
+                    if line.find('id="VERT_5.0x9.3"') == -1:
+                        machining.append(line.rstrip("\n"))
+                # collecting part name
                 if "<partLink " in line:
                     partlink.append(line.rstrip("\n"))
+                # collecting part dimensions
                 if "<extent>" in line:
                     x, y, z = map(
                         float,
-                        (line.lstrip("<extent>")).rstrip("</extent>\n").split(" "),
+                        ((line.lstrip("<extent>")).rstrip("</extent>\n")).split(" "),
                     )
-                    move_x.append(x + offset)
+                    move_x.append(x + offset)  # offset
+                    # accumulate offsets to get x coordinate of part
                     zero_x.append(sum(move_x))
+
+                # collecting multiline data about machining position
                 if "<part " in line:
                     part_flag = 1
                 if part_flag:
                     part.append(line.rstrip("\n"))
 
+            # writing down zero_x coordinate to partlink
             partlink.extend(
                 [
                     "<transformations>",
@@ -129,17 +141,16 @@ def process_bxf_files(bxf_paths, order_name, order_path):
     # Use in-memory template
     template = StringIO(TEMPLATE_CONTENT)
     with open(new_bxf_path, "w", encoding="utf-8") as new_bxf:
-        for line in template:
+        line = template.readline()
+        while line:
+            line = template.readline()
             if "MACHININGS" in line and machinings:
-                new_bxf.write("\n".join(machinings) + "\n")
-            elif "PARTLINKS" in line:
-                new_bxf.write("\n".join(partlinks) + "\n")
-            elif "PARTS" in line:
-                new_bxf.write("\n".join(parts) + "\n")
-            elif "ORDERNAME" in line:
-                new_bxf.write(line.replace("ORDERNAME", order_name))
-            else:
-                new_bxf.write(line)
+                line = "\n".join(machinings)
+            if "PARTLINKS" in line:
+                line = "\n".join(partlinks)
+            if "PARTS" in line:
+                line = "\n".join(parts)
+            new_bxf.write(line)
 
     os.startfile(order_path)
 
@@ -197,7 +208,7 @@ def input_order_number(parent, base_path):
         bxf_paths = [
             os.path.join(order_path, f)
             for f in os.listdir(order_path)
-            if f.lower().endswith(".bxf2")
+            if f.lower().endswith(".bxf2") and not f.lower().startswith("-")
         ]
         if not bxf_paths:
             error_label.config(text="Файлы .bxf2 не найдены. Попробуйте снова.")
@@ -245,7 +256,7 @@ def main():
                 bxf_paths = [
                     os.path.join(order_path, f)
                     for f in os.listdir(order_path)
-                    if f.lower().endswith(".bxf2")
+                    if f.lower().endswith(".bxf2") and not f.lower().startswith("-")
                 ]
                 process_bxf_files(bxf_paths, order_number, order_path)
         sys.exit(0)
@@ -296,7 +307,7 @@ def main():
                 bxf_paths = [
                     os.path.join(order_path, f)
                     for f in os.listdir(order_path)
-                    if f.lower().endswith(".bxf2")
+                    if f.lower().endswith(".bxf2") and not f.lower().startswith("-")
                 ]
                 process_bxf_files(bxf_paths, order_number, order_path)
 
@@ -315,7 +326,7 @@ if __name__ == "__main__":
             bxf_paths = [
                 os.path.join(order_path, f)
                 for f in os.listdir(order_path)
-                if f.lower().endswith(".bxf2")
+                if f.lower().endswith(".bxf2") and not f.lower().startswith("-")
             ]
             if bxf_paths:
                 process_bxf_files(bxf_paths, order_name, order_path)
