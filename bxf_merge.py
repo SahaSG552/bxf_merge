@@ -150,6 +150,8 @@ def process_bxf_files(bxf_paths, order_name, order_path):
                 line = "\n".join(partlinks)
             if "PARTS" in line:
                 line = "\n".join(parts)
+            if "ORDERNAME" in line:
+                line = line.replace("ORDERNAME", order_name)
             new_bxf.write(line)
 
     os.startfile(order_path)
